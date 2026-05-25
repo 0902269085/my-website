@@ -1,0 +1,72 @@
+<section class="page-hero">
+  <div class="container">
+    <p class="eyebrow">Giới thiệu</p>
+    <h1>THE SWAN ATELIERE là thương hiệu thời trang thiết kế nữ dành cho những cô gái trẻ yêu vẻ đẹp chỉn chu và cuốn hút</h1>
+    <p class="about-lead">
+      Nội dung trang này được viết lại theo tinh thần thân thiện, trẻ trung để giúp khách hàng hiểu rõ hơn về câu chuyện,
+      giá trị và thế mạnh riêng của thương hiệu.
+    </p>
+  </div>
+</section>
+
+<section class="page-section">
+  <div class="container story-layout">
+    <article class="surface-card story-card">
+      <p class="eyebrow">Câu chuyện thương hiệu</p>
+      <h2>{{ company.brandStory.title }}</h2>
+      <p class="story-card__intro">{{ company.brandStory.intro }}</p>
+
+      @for (paragraph of company.brandStory.paragraphs; track paragraph) {
+        <p>{{ paragraph }}</p>
+      }
+    </article>
+
+    <aside class="surface-card story-side">
+      <p class="eyebrow">Tổng quan</p>
+      <div class="story-side__stats">
+        @for (item of company.aboutStats; track item.label) {
+          <div class="story-side__stat">
+            <strong>{{ item.value }}</strong>
+            <span>{{ item.label }}</span>
+          </div>
+        }
+      </div>
+    </aside>
+  </div>
+</section>
+
+<section class="page-section">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow">Giá trị cốt lõi</p>
+      <h2>Những điều THE SWAN ATELIERE luôn muốn khách hàng cảm nhận khi chọn mua sản phẩm</h2>
+    </div>
+
+    <div class="values-grid">
+      @for (item of company.coreValues; track item.title) {
+        <article class="surface-card value-card">
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.description }}</p>
+        </article>
+      }
+    </div>
+  </div>
+</section>
+
+<section class="page-section">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow">Đội ngũ và năng lực</p>
+      <h2>Những điểm mạnh giúp thương hiệu tạo ra các thiết kế đẹp, dễ tiếp cận và khó thay thế</h2>
+    </div>
+
+    <div class="team-grid">
+      @for (item of company.teamStrengths; track item.title) {
+        <article class="surface-card team-card">
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.description }}</p>
+        </article>
+      }
+    </div>
+  </div>
+</section>

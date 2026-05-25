@@ -1,0 +1,15 @@
+[build]
+  base = "company-website"
+  command = "npm run build"
+  publish = "dist/company-website/browser"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://my-website-k8yo.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

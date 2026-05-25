@@ -1,0 +1,39 @@
+<section class="page-hero">
+  <div class="container">
+    <p class="eyebrow">Dịch vụ</p>
+    <h1>Những trải nghiệm mua sắm nổi bật tại THE SWAN ATELIERE dành cho khách hàng nữ trẻ</h1>
+    <p class="services-lead">
+      Trang này giới thiệu các nhóm dịch vụ và điểm mạnh nổi bật của thương hiệu, giúp khách hàng dễ hiểu,
+      dễ chọn và dễ liên hệ khi cần tư vấn thêm.
+    </p>
+  </div>
+</section>
+
+<section class="page-section">
+  <div class="container service-grid">
+    @for (service of company.services; track service.title) {
+      <article class="surface-card service-card">
+        <p class="service-card__label">Dịch vụ nổi bật</p>
+        <h2>{{ service.title }}</h2>
+        <p>{{ service.description }}</p>
+        <div class="service-card__benefit">
+          <strong>Lợi ích</strong>
+          <p>{{ service.benefit }}</p>
+        </div>
+        <a routerLink="/lien-he" class="button button--primary">Liên hệ tư vấn</a>
+      </article>
+    }
+  </div>
+</section>
+
+<section class="page-section">
+  <div class="container service-note">
+    <article class="surface-card service-note__card">
+      <h2>Phù hợp với khách hàng nào?</h2>
+      <p>
+        Nội dung hiện tại đang hướng đến nhóm khách hàng nữ trẻ từ 16 đến 30 tuổi, yêu cái đẹp, muốn tìm hàng thiết kế có form riêng,
+        chất lượng may tốt, giá ổn định và có thể mua nhanh mà không cần chờ đợi quá lâu.
+      </p>
+    </article>
+  </div>
+</section>

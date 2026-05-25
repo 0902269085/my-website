@@ -1,0 +1,50 @@
+<div class="site-shell">
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a routerLink="/" class="site-brand" aria-label="Về trang chủ">
+        <span class="site-brand__logo">TS</span>
+        <div>
+          <p class="site-header__brand">{{ company.name }}</p>
+          <p class="site-header__tagline">{{ company.slogan }}</p>
+        </div>
+      </a>
+
+      <nav class="site-nav" aria-label="Điều hướng chính">
+        @for (item of company.navItems; track item.route) {
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="site-nav__link--active"
+            [routerLinkActiveOptions]="{ exact: item.route === '/' }"
+            class="site-nav__link"
+          >
+            {{ item.label }}
+          </a>
+        }
+      </nav>
+    </div>
+  </header>
+
+  <main class="site-main">
+    <router-outlet />
+  </main>
+
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <div class="site-footer__about">
+        <h2 class="site-footer__title">{{ company.name }}</h2>
+        <p class="site-header__tagline">{{ company.slogan }}</p>
+      </div>
+      <div>
+        <h2 class="site-footer__title">Thông tin liên hệ</h2>
+        @for (branch of branchAddresses; track branch) {
+          <p>{{ branch }}</p>
+        }
+      </div>
+
+      <div class="site-footer__contact">
+        <a [href]="'tel:' + company.phone">{{ company.phone }}</a>
+        <a [href]="'mailto:' + company.email">{{ company.email }}</a>
+      </div>
+    </div>
+  </footer>
+</div>

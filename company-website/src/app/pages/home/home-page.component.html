@@ -1,0 +1,115 @@
+<section class="hero">
+  <div class="container hero__grid">
+    <div class="hero__content">
+      <p class="eyebrow">Thời trang thiết kế nữ</p>
+      <h1 class="hero__title">THE SWAN ATELIERE mang đến những thiết kế dành cho nữ trẻ yêu sự thanh lịch và hiện đại</h1>
+      <p class="hero__description">
+        Hướng đến khách hàng nữ từ 16 đến 30 tuổi, THE SWAN ATELIERE phát triển các thiết kế dễ mặc,
+        dễ phối và đủ tinh tế để đồng hành cùng nhiều khoảnh khắc trong đời sống hằng ngày.
+      </p>
+
+      <div class="hero__actions">
+        <a routerLink="/lien-he" class="button button--primary">Nhận tư vấn ngay</a>
+        <a routerLink="/dich-vu" class="button button--ghost">Xem dịch vụ</a>
+      </div>
+
+      <div class="hero__metrics">
+        <div class="hero__metric">
+          <strong>Từ năm 2020</strong>
+          <span>Phát triển theo định hướng thời trang thiết kế nữ</span>
+        </div>
+        <div class="hero__metric">
+          <strong>2 chi nhánh</strong>
+          <span>Phục vụ khách hàng tại TP. Hồ Chí Minh</span>
+        </div>
+      </div>
+    </div>
+
+    <aside class="hero__card">
+      <p class="hero__card-label">Tổng quan nhanh</p>
+      <h2>{{ company.name }}</h2>
+      <p>{{ company.slogan }}</p>
+
+      <ul class="hero__checklist">
+        @for (item of company.highlights; track item) {
+          <li>{{ item }}</li>
+        }
+      </ul>
+    </aside>
+  </div>
+</section>
+
+<section class="intro">
+  <div class="container">
+    <div class="section-heading">
+      <p class="eyebrow">Giới thiệu nhanh</p>
+      <h2>Một thương hiệu thời trang thiết kế nữ dành cho khách hàng trẻ yêu vẻ đẹp chỉn chu và dễ ứng dụng</h2>
+      <p>
+        Nội dung trang chủ được xây dựng để giúp người xem hiểu nhanh phong cách thương hiệu,
+        nhóm khách hàng phù hợp và những trải nghiệm nổi bật khi mua sắm tại THE SWAN ATELIERE.
+      </p>
+    </div>
+
+    <div class="intro__grid">
+      @for (item of company.quickIntro; track item) {
+        <article class="intro__card">
+          <span class="intro__icon"></span>
+          <p>{{ item }}</p>
+        </article>
+      }
+    </div>
+  </div>
+</section>
+
+<section class="services">
+  <div class="container">
+    <div class="section-heading">
+      <p class="eyebrow">Dịch vụ nổi bật</p>
+      <h2>Ba nhóm trải nghiệm nổi bật dành cho khách hàng trẻ</h2>
+    </div>
+
+    <div class="services__grid">
+      @for (service of company.services; track service.title; let index = $index) {
+        <article class="service-card">
+          <span class="service-card__index">0{{ index + 1 }}</span>
+          <h3>{{ service.title }}</h3>
+          <p>{{ service.description }}</p>
+        </article>
+      }
+    </div>
+  </div>
+</section>
+
+<section class="reasons">
+  <div class="container">
+    <div class="section-heading">
+      <p class="eyebrow">Vì sao chọn chúng tôi</p>
+      <h2>Những lý do giúp THE SWAN ATELIERE phù hợp với khách hàng nữ từ 16 đến 30 tuổi</h2>
+    </div>
+
+    <div class="reasons__grid">
+      @for (reason of company.reasons; track reason.title) {
+        <article class="reason-card">
+          <h3>{{ reason.title }}</h3>
+          <p>{{ reason.description }}</p>
+        </article>
+      }
+    </div>
+  </div>
+</section>
+
+<section class="home-cta">
+  <div class="container">
+    <div class="home-cta__box">
+      <div>
+        <p class="eyebrow">Sẵn sàng kết nối</p>
+        <h2>Nếu bạn muốn được tư vấn sản phẩm phù hợp với phong cách riêng, hãy liên hệ với THE SWAN ATELIERE</h2>
+      </div>
+
+      <div class="home-cta__actions">
+        <a routerLink="/lien-he" class="button button--primary">Đi đến trang liên hệ</a>
+        <a routerLink="/gioi-thieu" class="button button--ghost">Xem thêm về chúng tôi</a>
+      </div>
+    </div>
+  </div>
+</section>

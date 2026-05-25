@@ -1,0 +1,7 @@
+company-website/node_modules/
+company-website/dist/
+company-backend/node_modules/
+company-backend/.env
+company-backend/.env.local
+company-backend/.env.production
+*.log
