@@ -8,6 +8,7 @@ const { env } = require('./config/env');
 const adminRoutes = require('./routes/admin.routes');
 const healthRoutes = require('./routes/health.routes');
 const contactRoutes = require('./routes/contact.routes');
+const { router: siteSettingsRoutes } = require('./routes/site-settings.routes');
 
 const app = express();
 const uploadsDirectory = path.join(__dirname, '..', 'uploads');
@@ -43,6 +44,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/health', healthRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/site-settings', siteSettingsRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.use((error, req, res, next) => {

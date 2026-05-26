@@ -1,8 +1,13 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import {
+  HttpClient,
+  HttpEvent,
+  HttpHeaders,
+  HttpRequest
+} from '@angular/common/http';
 import { apiBaseUrl } from '../config/api.config';
 import { AdminSessionService } from './admin-session.service';
+import { SiteSettings } from './site-settings.service';
 
 export interface AdminUser {
   id: number;
@@ -65,24 +70,51 @@ export class AdminApiService {
     );
   }
 
-  createPost(formData: FormData) {
-    return this.http.post<ApiResponse<AdminPost>>(
-      `${this.adminApiUrl}/posts`,
-      formData,
+  getSiteSettings() {
+    return this.http.get<ApiResponse<SiteSettings>>(
+      `${this.adminApiUrl}/site-settings`,
       {
         headers: this.createAuthorizedHeaders()
       }
     );
   }
 
-  updatePost(postId: number, formData: FormData) {
-    return this.http.put<ApiResponse<AdminPost>>(
-      `${this.adminApiUrl}/posts/${postId}`,
-      formData,
+  saveSiteSettings(siteSettings: SiteSettings) {
+    return this.http.put<ApiResponse<SiteSettings>>(
+      `${this.adminApiUrl}/site-settings`,
+      siteSettings,
       {
         headers: this.createAuthorizedHeaders()
       }
     );
+  }
+
+  createPost(formData: FormData) {
+    const request = new HttpRequest(
+      'POST',
+      `${this.adminApiUrl}/posts`,
+      formData,
+      {
+        headers: this.createAuthorizedHeaders(),
+        reportProgress: true
+      }
+    );
+
+    return this.http.request<ApiResponse<AdminPost>>(request);
+  }
+
+  updatePost(postId: number, formData: FormData) {
+    const request = new HttpRequest(
+      'PUT',
+      `${this.adminApiUrl}/posts/${postId}`,
+      formData,
+      {
+        headers: this.createAuthorizedHeaders(),
+        reportProgress: true
+      }
+    );
+
+    return this.http.request<ApiResponse<AdminPost>>(request);
   }
 
   deletePost(postId: number) {

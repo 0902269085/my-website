@@ -1,10 +1,17 @@
 <section class="admin-page">
+  @if (isBootstrapping) {
+    <div class="admin-page__loading">
+      <div class="admin-spinner"></div>
+      <p>Đang tải dữ liệu quản trị...</p>
+    </div>
+  }
+
   <div class="container admin-page__header">
     <div>
       <p class="eyebrow">Quản trị nội dung</p>
-      <h1>Trang quản trị bài viết</h1>
+      <h1>Trang admin pro</h1>
       <p>
-        Đăng bài, chỉnh sửa nội dung, xóa bài và đổi tài khoản quản trị tại đây.
+        Quản lý giao diện website, bài viết, tài khoản quản trị và theo dõi tiến trình xử lý ngay tại đây.
       </p>
     </div>
 
@@ -14,165 +21,443 @@
     </div>
   </div>
 
-  <div class="container admin-layout">
-    <section class="surface-card admin-editor">
-      <div class="admin-editor__head">
-        <h2>{{ editingPostId ? 'Sửa bài viết' : 'Tạo bài viết mới' }}</h2>
-        @if (editingPostId) {
-          <button type="button" class="button button--ghost" (click)="startCreatePost()">Tạo bài mới</button>
-        }
-      </div>
-
-      <div class="admin-form">
-        <label class="form-field">
-          <span>Tiêu đề</span>
-          <input
-            type="text"
-            name="title"
-            [(ngModel)]="postForm.title"
-            placeholder="Nhập tiêu đề bài viết"
-          />
-        </label>
-
-        <label class="form-field">
-          <span>Nội dung</span>
-          <textarea
-            name="content"
-            [(ngModel)]="postForm.content"
-            rows="10"
-            placeholder="Nhập nội dung bài viết"
-          ></textarea>
-        </label>
-
-        <label class="form-field">
-          <span>Ảnh đại diện</span>
-          <input type="file" accept="image/*" (change)="chooseImageFile($event)" />
-        </label>
-
-        <label class="form-field">
-          <span>Video</span>
-          <input type="file" accept="video/*" (change)="chooseVideoFile($event)" />
-        </label>
-
-        @if (postsMessage) {
-          <p
-            class="form-status"
-            [class.form-status--success]="postsState === 'success'"
-            [class.form-status--error]="postsState === 'error'"
-          >
-            {{ postsMessage }}
-          </p>
-        }
-
-        <button type="button" class="button button--primary" [disabled]="isSavingPost" (click)="savePost()">
-          {{ isSavingPost ? 'Đang lưu...' : (editingPostId ? 'Lưu thay đổi' : 'Đăng bài mới') }}
-        </button>
-      </div>
-    </section>
-
-    <aside class="surface-card admin-account">
-      <h2>Đổi tài khoản quản trị</h2>
-
-      <div class="admin-form">
-        <label class="form-field">
-          <span>Tên đăng nhập hiện tại</span>
-          <input
-            type="text"
-            name="currentUsername"
-            [(ngModel)]="credentialsForm.currentUsername"
-            placeholder="Tên đăng nhập hiện tại"
-          />
-        </label>
-
-        <label class="form-field">
-          <span>Mật khẩu hiện tại</span>
-          <input
-            type="password"
-            name="currentPassword"
-            [(ngModel)]="credentialsForm.currentPassword"
-            placeholder="Mật khẩu hiện tại"
-          />
-        </label>
-
-        <label class="form-field">
-          <span>Tên đăng nhập mới</span>
-          <input
-            type="text"
-            name="newUsername"
-            [(ngModel)]="credentialsForm.newUsername"
-            placeholder="Tên đăng nhập mới"
-          />
-        </label>
-
-        <label class="form-field">
-          <span>Mật khẩu mới</span>
-          <input
-            type="password"
-            name="newPassword"
-            [(ngModel)]="credentialsForm.newPassword"
-            placeholder="Mật khẩu mới"
-          />
-        </label>
-
-        @if (credentialsMessage) {
-          <p
-            class="form-status"
-            [class.form-status--success]="credentialsState === 'success'"
-            [class.form-status--error]="credentialsState === 'error'"
-          >
-            {{ credentialsMessage }}
-          </p>
-        }
-
-        <button
-          type="button"
-          class="button button--primary"
-          [disabled]="isSavingCredentials"
-          (click)="saveCredentials()"
-        >
-          {{ isSavingCredentials ? 'Đang cập nhật...' : 'Đổi username / password' }}
-        </button>
-      </div>
-    </aside>
+  <div class="container admin-tabs">
+    @for (view of availableViews; track view.id) {
+      <button
+        type="button"
+        class="admin-tabs__button"
+        [class.admin-tabs__button--active]="activeView === view.id"
+        (click)="setActiveView(view.id)"
+      >
+        {{ view.label }}
+      </button>
+    }
   </div>
 
-  <div class="container">
-    <section class="surface-card admin-posts">
-      <div class="admin-posts__head">
-        <h2>Danh sách bài viết</h2>
-        @if (isLoadingPosts) {
-          <p>Đang tải bài viết...</p>
-        }
-      </div>
+  @if (activeView === 'overview') {
+    <div class="container admin-overview">
+      <article class="surface-card admin-overview__card">
+        <h2>Giao diện website</h2>
+        <p>Chỉnh logo, tên thương hiệu, tagline, footer và hero để khách không cần sửa trong code.</p>
+      </article>
 
-      <div class="admin-posts__grid">
-        @for (post of posts; track post.id) {
-          <article class="post-card">
-            @if (post.imagePath) {
-              <img [src]="resolveMediaUrl(post.imagePath)" [alt]="post.title" class="post-card__image" />
+      <article class="surface-card admin-overview__card">
+        <h2>Bài viết & media</h2>
+        <p>Đăng bài có ảnh và video tải trực tiếp từ máy admin, đồng thời theo dõi tiến trình tải lên bằng thanh trạng thái.</p>
+      </article>
+
+      <article class="surface-card admin-overview__card">
+        <h2>Tài khoản quản trị</h2>
+        <p>Đổi username và password ngay trong admin để bàn giao khách hàng dùng lâu dài.</p>
+      </article>
+
+      <article class="surface-card admin-overview__card">
+        <h2>Tính năng nên làm tiếp</h2>
+        <ul class="list-clean">
+          <li>Bật/tắt hiển thị bài viết ngoài website</li>
+          <li>Phân nhóm bài viết hoặc bộ sưu tập</li>
+          <li>Quản lý banner, trang Giới thiệu và Dịch vụ theo từng khối</li>
+          <li>Thêm SEO cơ bản như tiêu đề trang và mô tả</li>
+        </ul>
+      </article>
+    </div>
+  }
+
+  @if (activeView === 'appearance') {
+    <div class="container admin-layout admin-layout--wide">
+      <section class="surface-card admin-editor">
+        <div class="admin-editor__head">
+          <div>
+            <h2>Chỉnh header</h2>
+            <p>Quản lý logo chữ, tên thương hiệu và dòng mô tả ngắn trên đầu website.</p>
+          </div>
+        </div>
+
+        <div class="admin-form">
+          <label class="form-field">
+            <span>Logo chữ</span>
+            <input type="text" [(ngModel)]="appearanceForm.header.logoText" placeholder="Ví dụ: TS" />
+          </label>
+
+          <label class="form-field">
+            <span>Tên thương hiệu</span>
+            <input type="text" [(ngModel)]="appearanceForm.header.brandName" placeholder="Tên thương hiệu" />
+          </label>
+
+          <label class="form-field">
+            <span>Tagline header</span>
+            <textarea [(ngModel)]="appearanceForm.header.tagline" rows="3" placeholder="Mô tả ngắn ở header"></textarea>
+          </label>
+        </div>
+      </section>
+
+      <section class="surface-card admin-editor">
+        <div class="admin-editor__head">
+          <div>
+            <h2>Chỉnh hero trang chủ</h2>
+            <p>Đây là khối đầu trang chủ: tiêu đề lớn, mô tả, nút CTA và khối tổng quan bên phải.</p>
+          </div>
+        </div>
+
+        <div class="admin-form">
+          <label class="form-field">
+            <span>Eyebrow</span>
+            <input type="text" [(ngModel)]="appearanceForm.hero.eyebrow" placeholder="Dòng nhỏ trên hero" />
+          </label>
+
+          <label class="form-field">
+            <span>Tiêu đề hero</span>
+            <textarea [(ngModel)]="appearanceForm.hero.title" rows="4" placeholder="Tiêu đề lớn trên hero"></textarea>
+          </label>
+
+          <label class="form-field">
+            <span>Mô tả hero</span>
+            <textarea [(ngModel)]="appearanceForm.hero.description" rows="5" placeholder="Mô tả chi tiết ở hero"></textarea>
+          </label>
+
+          <div class="admin-form__row">
+            <label class="form-field">
+              <span>Nút chính</span>
+              <input type="text" [(ngModel)]="appearanceForm.hero.primaryButtonLabel" placeholder="Nhận tư vấn ngay" />
+            </label>
+
+            <label class="form-field">
+              <span>Route nút chính</span>
+              <input type="text" [(ngModel)]="appearanceForm.hero.primaryButtonRoute" placeholder="/lien-he" />
+            </label>
+          </div>
+
+          <div class="admin-form__row">
+            <label class="form-field">
+              <span>Nút phụ</span>
+              <input type="text" [(ngModel)]="appearanceForm.hero.secondaryButtonLabel" placeholder="Xem dịch vụ" />
+            </label>
+
+            <label class="form-field">
+              <span>Route nút phụ</span>
+              <input type="text" [(ngModel)]="appearanceForm.hero.secondaryButtonRoute" placeholder="/dich-vu" />
+            </label>
+          </div>
+
+          <label class="form-field">
+            <span>Nhãn khối bên phải</span>
+            <input type="text" [(ngModel)]="appearanceForm.hero.cardLabel" placeholder="Tổng quan nhanh" />
+          </label>
+
+          <label class="form-field">
+            <span>Tiêu đề khối bên phải</span>
+            <input type="text" [(ngModel)]="appearanceForm.hero.cardTitle" placeholder="Tiêu đề card hero" />
+          </label>
+
+          <label class="form-field">
+            <span>Mô tả khối bên phải</span>
+            <textarea [(ngModel)]="appearanceForm.hero.cardDescription" rows="3" placeholder="Mô tả card hero"></textarea>
+          </label>
+
+          <div class="admin-list-editor">
+            <div class="admin-list-editor__head">
+              <h3>Danh sách highlight</h3>
+              <button type="button" class="button button--ghost" (click)="addHighlight()">Thêm highlight</button>
+            </div>
+
+            @for (highlight of appearanceForm.hero.highlights; track $index) {
+              <div class="admin-list-editor__row">
+                <input
+                  type="text"
+                  [ngModel]="highlight"
+                  (ngModelChange)="changeHighlight($index, $event)"
+                  placeholder="Nhập highlight"
+                />
+                <button type="button" class="button button--ghost" (click)="removeHighlight($index)">Xóa</button>
+              </div>
             }
+          </div>
+        </div>
+      </section>
 
-            <div class="post-card__content">
-              <h3>{{ post.title }}</h3>
-              <p class="post-card__meta">Đường dẫn: {{ post.slug }}</p>
-              <p class="post-card__preview">{{ post.content }}</p>
+      <section class="surface-card admin-editor">
+        <div class="admin-editor__head">
+          <div>
+            <h2>Chỉnh footer</h2>
+            <p>Quản lý tiêu đề footer, mô tả liên hệ, điện thoại, email và địa chỉ chi nhánh.</p>
+          </div>
+        </div>
 
-              @if (post.videoPath) {
-                <a class="post-card__link" [href]="resolveMediaUrl(post.videoPath)" target="_blank" rel="noreferrer">
-                  Mở video đã tải lên
-                </a>
-              }
+        <div class="admin-form">
+          <label class="form-field">
+            <span>Tiêu đề footer</span>
+            <input type="text" [(ngModel)]="appearanceForm.footer.title" placeholder="Thông tin liên hệ" />
+          </label>
 
-              <div class="post-card__actions">
-                <button type="button" class="button button--ghost" (click)="startEditPost(post)">Sửa</button>
-                <button type="button" class="button button--ghost post-card__delete" (click)="deletePost(post)">Xóa</button>
+          <label class="form-field">
+            <span>Mô tả footer</span>
+            <textarea [(ngModel)]="appearanceForm.footer.description" rows="4" placeholder="Mô tả footer"></textarea>
+          </label>
+
+          <div class="admin-form__row">
+            <label class="form-field">
+              <span>Số điện thoại</span>
+              <input type="text" [(ngModel)]="appearanceForm.footer.phone" placeholder="0909480231" />
+            </label>
+
+            <label class="form-field">
+              <span>Email</span>
+              <input type="email" [(ngModel)]="appearanceForm.footer.email" placeholder="hello@theswanateliere.vn" />
+            </label>
+          </div>
+
+          <div class="admin-list-editor">
+            <div class="admin-list-editor__head">
+              <h3>Danh sách chi nhánh</h3>
+              <button type="button" class="button button--ghost" (click)="addBranchAddress()">Thêm chi nhánh</button>
+            </div>
+
+            @for (branch of appearanceForm.footer.branchAddresses; track $index) {
+              <div class="admin-list-editor__row">
+                <input
+                  type="text"
+                  [ngModel]="branch"
+                  (ngModelChange)="changeBranchAddress($index, $event)"
+                  placeholder="Nhập địa chỉ chi nhánh"
+                />
+                <button type="button" class="button button--ghost" (click)="removeBranchAddress($index)">Xóa</button>
+              </div>
+            }
+          </div>
+
+          @if (settingsMessage) {
+            <p
+              class="form-status"
+              [class.form-status--success]="settingsState === 'success'"
+              [class.form-status--error]="settingsState === 'error'"
+            >
+              {{ settingsMessage }}
+            </p>
+          }
+
+          <button type="button" class="button button--primary" [disabled]="isSavingSiteSettings" (click)="saveAppearance()">
+            {{ isSavingSiteSettings ? 'Đang lưu cấu hình...' : 'Lưu header / footer / hero' }}
+          </button>
+        </div>
+      </section>
+    </div>
+  }
+
+  @if (activeView === 'posts') {
+    <div class="container admin-layout">
+      <section class="surface-card admin-editor">
+        <div class="admin-editor__head">
+          <div>
+            <h2>{{ editingPostId ? 'Sửa bài viết' : 'Tạo bài viết mới' }}</h2>
+            <p>Tải ảnh/video trực tiếp từ máy admin và theo dõi thanh tiến trình trong lúc xử lý.</p>
+          </div>
+          @if (editingPostId) {
+            <button type="button" class="button button--ghost" (click)="startCreatePost()">Tạo bài mới</button>
+          }
+        </div>
+
+        <div class="admin-form">
+          <label class="form-field">
+            <span>Tiêu đề</span>
+            <input
+              type="text"
+              name="title"
+              [(ngModel)]="postForm.title"
+              placeholder="Nhập tiêu đề bài viết"
+            />
+          </label>
+
+          <label class="form-field">
+            <span>Nội dung</span>
+            <textarea
+              name="content"
+              [(ngModel)]="postForm.content"
+              rows="10"
+              placeholder="Nhập nội dung bài viết"
+            ></textarea>
+          </label>
+
+          <label class="form-field">
+            <span>Ảnh đại diện</span>
+            <input type="file" accept="image/*" (change)="chooseImageFile($event)" />
+            @if (selectedImageFileName) {
+              <small>Đã chọn: {{ selectedImageFileName }}</small>
+            }
+          </label>
+
+          <label class="form-field">
+            <span>Video</span>
+            <input type="file" accept="video/*" (change)="chooseVideoFile($event)" />
+            @if (selectedVideoFileName) {
+              <small>Đã chọn: {{ selectedVideoFileName }}</small>
+            }
+          </label>
+
+          @if (isSavingPost) {
+            <div class="progress-card">
+              <div class="progress-card__head">
+                <span>Tiến trình xử lý</span>
+                <strong>{{ uploadProgress }}%</strong>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-bar__value" [style.width.%]="uploadProgress"></div>
               </div>
             </div>
-          </article>
-        } @empty {
-          <p>Chưa có bài viết nào. Bạn có thể tạo bài đầu tiên ở khối bên trên.</p>
-        }
-      </div>
-    </section>
-  </div>
+          }
+
+          @if (postsMessage) {
+            <p
+              class="form-status"
+              [class.form-status--success]="postsState === 'success'"
+              [class.form-status--error]="postsState === 'error'"
+            >
+              {{ postsMessage }}
+            </p>
+          }
+
+          <button type="button" class="button button--primary" [disabled]="isSavingPost" (click)="savePost()">
+            {{ isSavingPost ? 'Đang lưu bài viết...' : (editingPostId ? 'Lưu thay đổi' : 'Đăng bài mới') }}
+          </button>
+        </div>
+      </section>
+
+      <aside class="surface-card admin-account">
+        <h2>Mẹo dùng an toàn</h2>
+        <ul class="list-clean">
+          <li>Ảnh nên dùng kích thước gọn để tải lên nhanh hơn.</li>
+          <li>Video tải lên trực tiếp từ máy admin, nên ưu tiên file ngắn và nhẹ.</li>
+          <li>Nếu đang lưu, hãy chờ thanh tiến trình hoàn tất rồi mới thao tác tiếp.</li>
+        </ul>
+      </aside>
+    </div>
+
+    <div class="container">
+      <section class="surface-card admin-posts">
+        <div class="admin-posts__head">
+          <div>
+            <h2>Danh sách bài viết</h2>
+            @if (isLoadingPosts) {
+              <p>Đang tải bài viết...</p>
+            }
+          </div>
+
+          <div class="admin-posts__search">
+            <input
+              type="text"
+              [(ngModel)]="postSearchKeyword"
+              (ngModelChange)="applyPostFilter()"
+              placeholder="Tìm theo tiêu đề, slug hoặc nội dung"
+            />
+          </div>
+        </div>
+
+        <div class="admin-posts__grid">
+          @for (post of filteredPosts; track post.id) {
+            <article class="post-card">
+              @if (post.imagePath) {
+                <img [src]="resolveMediaUrl(post.imagePath)" [alt]="post.title" class="post-card__image" />
+              }
+
+              <div class="post-card__content">
+                <h3>{{ post.title }}</h3>
+                <p class="post-card__meta">Đường dẫn: {{ post.slug }}</p>
+                <p class="post-card__meta">Cập nhật: {{ post.updatedAt | date:'short' }}</p>
+                <p class="post-card__preview">{{ post.content }}</p>
+
+                @if (post.videoPath) {
+                  <a class="post-card__link" [href]="resolveMediaUrl(post.videoPath)" target="_blank" rel="noreferrer">
+                    Mở video đã tải lên
+                  </a>
+                }
+
+                <div class="post-card__actions">
+                  <button type="button" class="button button--ghost" (click)="startEditPost(post)">Sửa</button>
+                  <button type="button" class="button button--ghost post-card__delete" (click)="deletePost(post)">Xóa</button>
+                </div>
+              </div>
+            </article>
+          } @empty {
+            <p>Chưa có bài viết nào khớp với điều kiện tìm kiếm hiện tại.</p>
+          }
+        </div>
+      </section>
+    </div>
+  }
+
+  @if (activeView === 'account') {
+    <div class="container admin-layout admin-layout--narrow">
+      <section class="surface-card admin-account admin-account--full">
+        <h2>Đổi tài khoản quản trị</h2>
+        <p>Khách hàng có thể đổi username và password tại đây sau khi nhận bàn giao website.</p>
+
+        <div class="admin-form">
+          <label class="form-field">
+            <span>Tên đăng nhập hiện tại</span>
+            <input
+              type="text"
+              name="currentUsername"
+              [(ngModel)]="credentialsForm.currentUsername"
+              placeholder="Tên đăng nhập hiện tại"
+            />
+          </label>
+
+          <label class="form-field">
+            <span>Mật khẩu hiện tại</span>
+            <input
+              type="password"
+              name="currentPassword"
+              [(ngModel)]="credentialsForm.currentPassword"
+              placeholder="Mật khẩu hiện tại"
+            />
+          </label>
+
+          <label class="form-field">
+            <span>Tên đăng nhập mới</span>
+            <input
+              type="text"
+              name="newUsername"
+              [(ngModel)]="credentialsForm.newUsername"
+              placeholder="Tên đăng nhập mới"
+            />
+          </label>
+
+          <label class="form-field">
+            <span>Mật khẩu mới</span>
+            <input
+              type="password"
+              name="newPassword"
+              [(ngModel)]="credentialsForm.newPassword"
+              placeholder="Mật khẩu mới"
+            />
+          </label>
+
+          @if (credentialsMessage) {
+            <p
+              class="form-status"
+              [class.form-status--success]="credentialsState === 'success'"
+              [class.form-status--error]="credentialsState === 'error'"
+            >
+              {{ credentialsMessage }}
+            </p>
+          }
+
+          @if (isSavingCredentials) {
+            <div class="admin-inline-loading">
+              <div class="admin-spinner admin-spinner--small"></div>
+              <span>Đang cập nhật tài khoản quản trị...</span>
+            </div>
+          }
+
+          <button
+            type="button"
+            class="button button--primary"
+            [disabled]="isSavingCredentials"
+            (click)="saveCredentials()"
+          >
+            {{ isSavingCredentials ? 'Đang cập nhật...' : 'Đổi username / password' }}
+          </button>
+        </div>
+      </section>
+    </div>
+  }
 </section>

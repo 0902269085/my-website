@@ -9,6 +9,11 @@ const { Router } = require('express');
 const { ensureAdminCmsTables, getConnectionPool, sql } = require('../config/database');
 const { env } = require('../config/env');
 const { verifyAdminToken } = require('../middleware/admin-auth');
+const {
+  getDefaultSiteSettings,
+  getSiteSettingsRecord,
+  mapSiteSettings
+} = require('./site-settings.routes');
 
 const router = Router();
 const uploadsDirectory = path.join(__dirname, '..', '..', 'uploads');
@@ -97,6 +102,53 @@ async function findAdminUserByUsername(pool, username) {
     `);
 
   return result.recordset[0];
+}
+
+function sanitizeSiteSettingsPayload(siteSettingsPayload) {
+  const defaults = getDefaultSiteSettings();
+
+  const header = siteSettingsPayload?.header || {};
+  const footer = siteSettingsPayload?.footer || {};
+  const hero = siteSettingsPayload?.hero || {};
+
+  return {
+    header: {
+      logoText: normalizeText(header.logoText) || defaults.header.logoText,
+      brandName: normalizeText(header.brandName) || defaults.header.brandName,
+      tagline: normalizeText(header.tagline) || defaults.header.tagline
+    },
+    footer: {
+      title: normalizeText(footer.title) || defaults.footer.title,
+      description: normalizeText(footer.description) || defaults.footer.description,
+      phone: normalizeText(footer.phone) || defaults.footer.phone,
+      email: normalizeText(footer.email) || defaults.footer.email,
+      branchAddresses: Array.isArray(footer.branchAddresses)
+        ? footer.branchAddresses
+            .map((item) => normalizeText(item))
+            .filter(Boolean)
+        : defaults.footer.branchAddresses
+    },
+    hero: {
+      eyebrow: normalizeText(hero.eyebrow) || defaults.hero.eyebrow,
+      title: normalizeText(hero.title) || defaults.hero.title,
+      description: normalizeText(hero.description) || defaults.hero.description,
+      primaryButtonLabel:
+        normalizeText(hero.primaryButtonLabel) || defaults.hero.primaryButtonLabel,
+      primaryButtonRoute:
+        normalizeText(hero.primaryButtonRoute) || defaults.hero.primaryButtonRoute,
+      secondaryButtonLabel:
+        normalizeText(hero.secondaryButtonLabel) || defaults.hero.secondaryButtonLabel,
+      secondaryButtonRoute:
+        normalizeText(hero.secondaryButtonRoute) || defaults.hero.secondaryButtonRoute,
+      cardLabel: normalizeText(hero.cardLabel) || defaults.hero.cardLabel,
+      cardTitle: normalizeText(hero.cardTitle) || defaults.hero.cardTitle,
+      cardDescription:
+        normalizeText(hero.cardDescription) || defaults.hero.cardDescription,
+      highlights: Array.isArray(hero.highlights)
+        ? hero.highlights.map((item) => normalizeText(item)).filter(Boolean)
+        : defaults.hero.highlights
+    }
+  };
 }
 
 router.post('/login', async (req, res) => {
@@ -201,6 +253,80 @@ router.get('/posts', verifyAdminToken, async (req, res) => {
     return res.status(500).json({
       ok: false,
       message: 'Chưa lấy được danh sách bài viết.',
+      error: error.message
+    });
+  } finally {
+    if (pool) {
+      await pool.close();
+    }
+  }
+});
+
+router.get('/site-settings', verifyAdminToken, async (req, res) => {
+  let pool;
+
+  try {
+    pool = await getConnectionPool();
+    const record = await getSiteSettingsRecord(pool);
+
+    return res.json({
+      ok: true,
+      message: 'Đã lấy cấu hình giao diện website.',
+      data: mapSiteSettings(record)
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      message: 'Chưa lấy được cấu hình giao diện website.',
+      error: error.message
+    });
+  } finally {
+    if (pool) {
+      await pool.close();
+    }
+  }
+});
+
+router.put('/site-settings', verifyAdminToken, async (req, res) => {
+  const nextSettings = sanitizeSiteSettingsPayload(req.body);
+
+  let pool;
+
+  try {
+    pool = await getConnectionPool();
+    await ensureAdminCmsTables(pool);
+
+    const currentRecord = await getSiteSettingsRecord(pool);
+
+    const result = await pool.request()
+      .input('id', sql.Int, currentRecord.id)
+      .input('headerJson', sql.NVarChar(sql.MAX), JSON.stringify(nextSettings.header))
+      .input('footerJson', sql.NVarChar(sql.MAX), JSON.stringify(nextSettings.footer))
+      .input('heroJson', sql.NVarChar(sql.MAX), JSON.stringify(nextSettings.hero))
+      .query(`
+        UPDATE dbo.SiteSettings
+        SET
+          HeaderJson = @headerJson,
+          FooterJson = @footerJson,
+          HeroJson = @heroJson,
+          UpdatedAt = SYSUTCDATETIME()
+        OUTPUT
+          INSERTED.Id AS id,
+          INSERTED.HeaderJson AS headerJson,
+          INSERTED.FooterJson AS footerJson,
+          INSERTED.HeroJson AS heroJson
+        WHERE Id = @id;
+      `);
+
+    return res.json({
+      ok: true,
+      message: 'Đã lưu cấu hình giao diện website.',
+      data: mapSiteSettings(result.recordset[0])
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      message: 'Chưa lưu được cấu hình giao diện website.',
       error: error.message
     });
   } finally {

@@ -2,10 +2,10 @@
   <header class="site-header">
     <div class="container site-header__inner">
       <a routerLink="/" class="site-brand" aria-label="Về trang chủ">
-        <span class="site-brand__logo">TS</span>
+        <span class="site-brand__logo">{{ headerSettings.logoText }}</span>
         <div>
-          <p class="site-header__brand">{{ company.name }}</p>
-          <p class="site-header__tagline">{{ company.slogan }}</p>
+          <p class="site-header__brand">{{ headerSettings.brandName }}</p>
+          <p class="site-header__tagline">{{ headerSettings.tagline }}</p>
         </div>
       </a>
 
@@ -31,19 +31,19 @@
   <footer class="site-footer">
     <div class="container site-footer__inner">
       <div class="site-footer__about">
-        <h2 class="site-footer__title">{{ company.name }}</h2>
-        <p class="site-header__tagline">{{ company.slogan }}</p>
+        <h2 class="site-footer__title">{{ headerSettings.brandName }}</h2>
+        <p class="site-header__tagline">{{ footerSettings.description }}</p>
       </div>
       <div>
-        <h2 class="site-footer__title">Thông tin liên hệ</h2>
+        <h2 class="site-footer__title">{{ footerSettings.title }}</h2>
         @for (branch of branchAddresses; track branch) {
           <p>{{ branch }}</p>
         }
       </div>
 
       <div class="site-footer__contact">
-        <a [href]="'tel:' + company.phone">{{ company.phone }}</a>
-        <a [href]="'mailto:' + company.email">{{ company.email }}</a>
+        <a [href]="'tel:' + footerSettings.phone">{{ footerSettings.phone }}</a>
+        <a [href]="'mailto:' + footerSettings.email">{{ footerSettings.email }}</a>
       </div>
     </div>
   </footer>
