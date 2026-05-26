@@ -1,0 +1,152 @@
+.admin-page {
+  padding: 2rem 0 4rem;
+  background: linear-gradient(180deg, rgba(217, 143, 61, 0.08), rgba(255, 255, 255, 0.98));
+}
+
+.admin-page__header,
+.admin-layout,
+.admin-posts__grid,
+.admin-posts__head,
+.post-card__actions,
+.admin-page__actions {
+  display: flex;
+}
+
+.admin-page__header,
+.admin-posts__head,
+.admin-page__actions {
+  justify-content: space-between;
+  align-items: start;
+  gap: 1rem;
+}
+
+.admin-layout {
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  align-items: start;
+}
+
+.admin-editor {
+  flex: 1.4;
+}
+
+.admin-account {
+  flex: 0.9;
+}
+
+.admin-editor__head,
+.admin-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-editor__head {
+  margin-bottom: 1rem;
+}
+
+.admin-form .form-field {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.admin-form .form-field span {
+  font-weight: 600;
+}
+
+.admin-form input,
+.admin-form textarea {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  font: inherit;
+}
+
+.admin-posts {
+  margin-top: 1.5rem;
+}
+
+.admin-posts__grid {
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.post-card {
+  display: grid;
+  grid-template-columns: 16rem 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: #fff;
+}
+
+.post-card__image {
+  width: 100%;
+  height: 12rem;
+  object-fit: cover;
+  border-radius: 16px;
+}
+
+.post-card__content {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.post-card__meta {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.95rem;
+}
+
+.post-card__preview {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
+.post-card__link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.post-card__actions {
+  gap: 0.75rem;
+}
+
+.post-card__delete {
+  color: #9f3030;
+}
+
+.form-status {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  font-weight: 600;
+}
+
+.form-status--success {
+  background: rgba(30, 122, 77, 0.12);
+  color: #1e7a4d;
+}
+
+.form-status--error {
+  background: rgba(190, 69, 69, 0.12);
+  color: #9f3030;
+}
+
+@media (max-width: 960px) {
+  .admin-layout,
+  .admin-page__header,
+  .admin-page__actions,
+  .post-card {
+    display: grid;
+  }
+
+  .post-card {
+    grid-template-columns: 1fr;
+  }
+}

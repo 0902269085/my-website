@@ -1,0 +1,178 @@
+<section class="admin-page">
+  <div class="container admin-page__header">
+    <div>
+      <p class="eyebrow">Quản trị nội dung</p>
+      <h1>Trang quản trị bài viết</h1>
+      <p>
+        Đăng bài, chỉnh sửa nội dung, xóa bài và đổi tài khoản quản trị tại đây.
+      </p>
+    </div>
+
+    <div class="admin-page__actions">
+      <p class="admin-page__welcome">Xin chào, {{ currentUser?.username }}</p>
+      <button type="button" class="button button--ghost" (click)="logout()">Đăng xuất</button>
+    </div>
+  </div>
+
+  <div class="container admin-layout">
+    <section class="surface-card admin-editor">
+      <div class="admin-editor__head">
+        <h2>{{ editingPostId ? 'Sửa bài viết' : 'Tạo bài viết mới' }}</h2>
+        @if (editingPostId) {
+          <button type="button" class="button button--ghost" (click)="startCreatePost()">Tạo bài mới</button>
+        }
+      </div>
+
+      <div class="admin-form">
+        <label class="form-field">
+          <span>Tiêu đề</span>
+          <input
+            type="text"
+            name="title"
+            [(ngModel)]="postForm.title"
+            placeholder="Nhập tiêu đề bài viết"
+          />
+        </label>
+
+        <label class="form-field">
+          <span>Nội dung</span>
+          <textarea
+            name="content"
+            [(ngModel)]="postForm.content"
+            rows="10"
+            placeholder="Nhập nội dung bài viết"
+          ></textarea>
+        </label>
+
+        <label class="form-field">
+          <span>Ảnh đại diện</span>
+          <input type="file" accept="image/*" (change)="chooseImageFile($event)" />
+        </label>
+
+        <label class="form-field">
+          <span>Video</span>
+          <input type="file" accept="video/*" (change)="chooseVideoFile($event)" />
+        </label>
+
+        @if (postsMessage) {
+          <p
+            class="form-status"
+            [class.form-status--success]="postsState === 'success'"
+            [class.form-status--error]="postsState === 'error'"
+          >
+            {{ postsMessage }}
+          </p>
+        }
+
+        <button type="button" class="button button--primary" [disabled]="isSavingPost" (click)="savePost()">
+          {{ isSavingPost ? 'Đang lưu...' : (editingPostId ? 'Lưu thay đổi' : 'Đăng bài mới') }}
+        </button>
+      </div>
+    </section>
+
+    <aside class="surface-card admin-account">
+      <h2>Đổi tài khoản quản trị</h2>
+
+      <div class="admin-form">
+        <label class="form-field">
+          <span>Tên đăng nhập hiện tại</span>
+          <input
+            type="text"
+            name="currentUsername"
+            [(ngModel)]="credentialsForm.currentUsername"
+            placeholder="Tên đăng nhập hiện tại"
+          />
+        </label>
+
+        <label class="form-field">
+          <span>Mật khẩu hiện tại</span>
+          <input
+            type="password"
+            name="currentPassword"
+            [(ngModel)]="credentialsForm.currentPassword"
+            placeholder="Mật khẩu hiện tại"
+          />
+        </label>
+
+        <label class="form-field">
+          <span>Tên đăng nhập mới</span>
+          <input
+            type="text"
+            name="newUsername"
+            [(ngModel)]="credentialsForm.newUsername"
+            placeholder="Tên đăng nhập mới"
+          />
+        </label>
+
+        <label class="form-field">
+          <span>Mật khẩu mới</span>
+          <input
+            type="password"
+            name="newPassword"
+            [(ngModel)]="credentialsForm.newPassword"
+            placeholder="Mật khẩu mới"
+          />
+        </label>
+
+        @if (credentialsMessage) {
+          <p
+            class="form-status"
+            [class.form-status--success]="credentialsState === 'success'"
+            [class.form-status--error]="credentialsState === 'error'"
+          >
+            {{ credentialsMessage }}
+          </p>
+        }
+
+        <button
+          type="button"
+          class="button button--primary"
+          [disabled]="isSavingCredentials"
+          (click)="saveCredentials()"
+        >
+          {{ isSavingCredentials ? 'Đang cập nhật...' : 'Đổi username / password' }}
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <div class="container">
+    <section class="surface-card admin-posts">
+      <div class="admin-posts__head">
+        <h2>Danh sách bài viết</h2>
+        @if (isLoadingPosts) {
+          <p>Đang tải bài viết...</p>
+        }
+      </div>
+
+      <div class="admin-posts__grid">
+        @for (post of posts; track post.id) {
+          <article class="post-card">
+            @if (post.imagePath) {
+              <img [src]="resolveMediaUrl(post.imagePath)" [alt]="post.title" class="post-card__image" />
+            }
+
+            <div class="post-card__content">
+              <h3>{{ post.title }}</h3>
+              <p class="post-card__meta">Đường dẫn: {{ post.slug }}</p>
+              <p class="post-card__preview">{{ post.content }}</p>
+
+              @if (post.videoPath) {
+                <a class="post-card__link" [href]="resolveMediaUrl(post.videoPath)" target="_blank" rel="noreferrer">
+                  Mở video đã tải lên
+                </a>
+              }
+
+              <div class="post-card__actions">
+                <button type="button" class="button button--ghost" (click)="startEditPost(post)">Sửa</button>
+                <button type="button" class="button button--ghost post-card__delete" (click)="deletePost(post)">Xóa</button>
+              </div>
+            </div>
+          </article>
+        } @empty {
+          <p>Chưa có bài viết nào. Bạn có thể tạo bài đầu tiên ở khối bên trên.</p>
+        }
+      </div>
+    </section>
+  </div>
+</section>

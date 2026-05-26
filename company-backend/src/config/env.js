@@ -34,6 +34,9 @@ const env = {
     process.env.FRONTEND_URL || 'http://localhost:4200',
     process.env.ALLOWED_ORIGINS || ''
   ),
+  adminJwtSecret: process.env.ADMIN_JWT_SECRET || 'change-this-admin-secret',
+  adminDefaultUsername: process.env.ADMIN_DEFAULT_USERNAME || 'admin',
+  adminDefaultPassword: process.env.ADMIN_DEFAULT_PASSWORD || 'ChangeMe123!',
   db: {
     user: process.env.DB_USER || 'sa',
     password: process.env.DB_PASSWORD || '',
