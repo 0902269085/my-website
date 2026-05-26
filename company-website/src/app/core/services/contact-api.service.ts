@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { timeout } from 'rxjs';
 import { apiBaseUrl } from '../config/api.config';
 
 export interface ContactFormPayload {
@@ -30,6 +31,8 @@ export class ContactApiService {
   private readonly apiUrl = `${apiBaseUrl}/contact`;
 
   submitContactForm(payload: ContactFormPayload) {
-    return this.http.post<ContactApiResponse>(this.apiUrl, payload);
+    return this.http
+      .post<ContactApiResponse>(this.apiUrl, payload)
+      .pipe(timeout(12000));
   }
 }

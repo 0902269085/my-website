@@ -1,8 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { companyData } from '../../core/data/company.data';
-import { BranchApiService } from '../../core/services/branch-api.service';
 import { ContactApiService } from '../../core/services/contact-api.service';
 
 @Component({
@@ -11,8 +10,7 @@ import { ContactApiService } from '../../core/services/contact-api.service';
   templateUrl: './contact-page.component.html',
   styleUrl: './contact-page.component.scss'
 })
-export class ContactPageComponent implements OnInit {
-  private readonly branchApiService = inject(BranchApiService);
+export class ContactPageComponent {
   private readonly contactApiService = inject(ContactApiService);
 
   protected readonly company = companyData;
@@ -47,19 +45,6 @@ export class ContactPageComponent implements OnInit {
     }
 
     return missingFields;
-  }
-
-  ngOnInit(): void {
-    this.branchApiService.getBranches().subscribe({
-      next: (response) => {
-        this.branchAddresses = response.data.map(
-          (branch) => `${branch.name}: ${branch.address}`
-        );
-      },
-      error: () => {
-        this.branchAddresses = companyData.branchAddresses;
-      }
-    });
   }
 
   protected submitContactForm(contactForm: NgForm): void {
@@ -97,7 +82,8 @@ export class ContactPageComponent implements OnInit {
         this.isSubmitting = false;
         this.submitState = 'error';
         this.submitMessage =
-          error.error?.message || 'Gửi thông tin chưa thành công. Vui lòng thử lại.';
+          error.error?.message ||
+          'Hệ thống đang bận hoặc chưa kết nối được. Vui lòng thử lại sau ít phút.';
       }
     });
   }
