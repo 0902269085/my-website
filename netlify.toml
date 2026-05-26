@@ -5,7 +5,7 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "https://my-website-k8yo.onrender.com/api/:splat"
+  to = "https://my-website-1-cbhg.onrender.com/api/:splat"
   status = 200
   force = true
 
