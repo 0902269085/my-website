@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const { Router } = require('express');
 
+const { cloudinary, isCloudinaryConfigured } = require('../config/cloudinary');
 const { ensureAdminCmsTables, getConnectionPool, sql } = require('../config/database');
 const { env } = require('../config/env');
 const { verifyAdminToken } = require('../middleware/admin-auth');
@@ -60,20 +61,92 @@ function createSlug(title) {
     .slice(0, 200);
 }
 
+function deleteLocalFile(filePath) {
+  if (!filePath || !fs.existsSync(filePath)) {
+    return;
+  }
+
+  fs.unlinkSync(filePath);
+}
+
+function parseBoolean(value) {
+  return value === true || value === 'true' || value === '1' || value === 1;
+}
+
+function buildExcerpt(content, excerpt) {
+  const normalizedExcerpt = normalizeText(excerpt);
+
+  if (normalizedExcerpt) {
+    return normalizedExcerpt.slice(0, 500);
+  }
+
+  return content.slice(0, 220);
+}
+
+function buildSeoTitle(title, seoTitle) {
+  const normalizedSeoTitle = normalizeText(seoTitle);
+
+  if (normalizedSeoTitle) {
+    return normalizedSeoTitle.slice(0, 200);
+  }
+
+  return title.slice(0, 200);
+}
+
+function buildSeoDescription(content, excerpt, seoDescription) {
+  const normalizedSeoDescription = normalizeText(seoDescription);
+
+  if (normalizedSeoDescription) {
+    return normalizedSeoDescription.slice(0, 320);
+  }
+
+  return buildExcerpt(content, excerpt).slice(0, 320);
+}
+
 function deleteUploadedFile(filePath) {
-  if (!filePath) {
+  if (!filePath || filePath.startsWith('http://') || filePath.startsWith('https://')) {
     return;
   }
 
   const absolutePath = path.join(uploadsDirectory, path.basename(filePath));
 
-  if (fs.existsSync(absolutePath)) {
-    fs.unlinkSync(absolutePath);
-  }
+  deleteLocalFile(absolutePath);
 }
 
 function buildStoredMediaPath(file) {
   return file ? `/uploads/${file.filename}` : null;
+}
+
+async function uploadMediaToCloudinary(file, mediaType) {
+  if (!file || !isCloudinaryConfigured) {
+    return null;
+  }
+
+  const folder =
+    mediaType === 'video'
+      ? 'the-swan-ateliere/posts/videos'
+      : 'the-swan-ateliere/posts/images';
+
+  const result = await cloudinary.uploader.upload(file.path, {
+    folder,
+    resource_type: mediaType === 'video' ? 'video' : 'image'
+  });
+
+  return {
+    url: result.secure_url,
+    publicId: result.public_id
+  };
+}
+
+async function removeStoredMedia(mediaPath, mediaPublicId, mediaType) {
+  if (mediaPublicId && isCloudinaryConfigured) {
+    await cloudinary.uploader.destroy(mediaPublicId, {
+      resource_type: mediaType === 'video' ? 'video' : 'image'
+    });
+    return;
+  }
+
+  deleteUploadedFile(mediaPath);
 }
 
 function createAdminToken(adminUser) {
@@ -235,9 +308,15 @@ router.get('/posts', verifyAdminToken, async (req, res) => {
         Id AS id,
         Title AS title,
         Slug AS slug,
+        Excerpt AS excerpt,
         Content AS content,
         ImagePath AS imagePath,
         VideoPath AS videoPath,
+        SeoTitle AS seoTitle,
+        SeoDescription AS seoDescription,
+        IsPublished AS isPublished,
+        IsFeatured AS isFeatured,
+        PublishedAt AS publishedAt,
         CreatedAt AS createdAt,
         UpdatedAt AS updatedAt
       FROM dbo.Posts
@@ -345,11 +424,23 @@ router.post(
   ]),
   async (req, res) => {
     const title = normalizeText(req.body.title);
+    const excerpt = normalizeText(req.body.excerpt);
     const content = normalizeText(req.body.content);
+    const seoTitle = normalizeText(req.body.seoTitle);
+    const seoDescription = normalizeText(req.body.seoDescription);
+    const isPublished = parseBoolean(req.body.isPublished);
+    const isFeatured = parseBoolean(req.body.isFeatured);
+    const tempImageFile = req.files?.image?.[0] || null;
+    const tempVideoFile = req.files?.video?.[0] || null;
 
     if (!title || !content) {
-      deleteUploadedFile(buildStoredMediaPath(req.files?.image?.[0]));
-      deleteUploadedFile(buildStoredMediaPath(req.files?.video?.[0]));
+      if (uploadedImage) {
+        deleteLocalFile(tempImageFile?.path);
+      }
+
+      if (uploadedVideo) {
+        deleteLocalFile(tempVideoFile?.path);
+      }
 
       return res.status(400).json({
         ok: false,
@@ -358,10 +449,19 @@ router.post(
     }
 
     const slug = createSlug(title);
+    const nextExcerpt = buildExcerpt(content, excerpt);
+    const nextSeoTitle = buildSeoTitle(title, seoTitle);
+    const nextSeoDescription = buildSeoDescription(content, excerpt, seoDescription);
+    const publishedAt = isPublished ? new Date() : null;
 
     if (!slug) {
-      deleteUploadedFile(buildStoredMediaPath(req.files?.image?.[0]));
-      deleteUploadedFile(buildStoredMediaPath(req.files?.video?.[0]));
+      if (uploadedImage) {
+        deleteLocalFile(tempImageFile?.path);
+      }
+
+      if (uploadedVideo) {
+        deleteLocalFile(tempVideoFile?.path);
+      }
 
       return res.status(400).json({
         ok: false,
@@ -370,6 +470,8 @@ router.post(
     }
 
     let pool;
+    let uploadedImage = null;
+    let uploadedVideo = null;
 
     try {
       pool = await getConnectionPool();
@@ -384,8 +486,8 @@ router.post(
         `);
 
       if (duplicatePost.recordset.length > 0) {
-        deleteUploadedFile(buildStoredMediaPath(req.files?.image?.[0]));
-        deleteUploadedFile(buildStoredMediaPath(req.files?.video?.[0]));
+        deleteLocalFile(tempImageFile?.path);
+        deleteLocalFile(tempVideoFile?.path);
 
         return res.status(400).json({
           ok: false,
@@ -393,28 +495,82 @@ router.post(
         });
       }
 
-      const imagePath = buildStoredMediaPath(req.files?.image?.[0]);
-      const videoPath = buildStoredMediaPath(req.files?.video?.[0]);
+      uploadedImage = await uploadMediaToCloudinary(tempImageFile, 'image');
+      uploadedVideo = await uploadMediaToCloudinary(tempVideoFile, 'video');
+      const imagePath = uploadedImage?.url || buildStoredMediaPath(tempImageFile);
+      const imagePublicId = uploadedImage?.publicId || null;
+      const videoPath = uploadedVideo?.url || buildStoredMediaPath(tempVideoFile);
+      const videoPublicId = uploadedVideo?.publicId || null;
 
       const result = await pool.request()
         .input('title', sql.NVarChar(200), title)
         .input('slug', sql.NVarChar(220), slug)
+        .input('excerpt', sql.NVarChar(500), nextExcerpt)
         .input('content', sql.NVarChar(sql.MAX), content)
         .input('imagePath', sql.NVarChar(500), imagePath)
+        .input('imagePublicId', sql.NVarChar(255), imagePublicId)
         .input('videoPath', sql.NVarChar(500), videoPath)
+        .input('videoPublicId', sql.NVarChar(255), videoPublicId)
+        .input('seoTitle', sql.NVarChar(200), nextSeoTitle)
+        .input('seoDescription', sql.NVarChar(320), nextSeoDescription)
+        .input('isPublished', sql.Bit, isPublished)
+        .input('isFeatured', sql.Bit, isFeatured)
+        .input('publishedAt', sql.DateTime2, publishedAt)
         .query(`
-          INSERT INTO dbo.Posts (Title, Slug, Content, ImagePath, VideoPath)
+          INSERT INTO dbo.Posts (
+            Title,
+            Slug,
+            Excerpt,
+            Content,
+            ImagePath,
+            ImagePublicId,
+            VideoPath,
+            VideoPublicId,
+            SeoTitle,
+            SeoDescription,
+            IsPublished,
+            IsFeatured,
+            PublishedAt
+          )
           OUTPUT
             INSERTED.Id AS id,
             INSERTED.Title AS title,
             INSERTED.Slug AS slug,
+            INSERTED.Excerpt AS excerpt,
             INSERTED.Content AS content,
             INSERTED.ImagePath AS imagePath,
             INSERTED.VideoPath AS videoPath,
+            INSERTED.SeoTitle AS seoTitle,
+            INSERTED.SeoDescription AS seoDescription,
+            INSERTED.IsPublished AS isPublished,
+            INSERTED.IsFeatured AS isFeatured,
+            INSERTED.PublishedAt AS publishedAt,
             INSERTED.CreatedAt AS createdAt,
             INSERTED.UpdatedAt AS updatedAt
-          VALUES (@title, @slug, @content, @imagePath, @videoPath);
+          VALUES (
+            @title,
+            @slug,
+            @excerpt,
+            @content,
+            @imagePath,
+            @imagePublicId,
+            @videoPath,
+            @videoPublicId,
+            @seoTitle,
+            @seoDescription,
+            @isPublished,
+            @isFeatured,
+            @publishedAt
+          );
         `);
+
+      if (uploadedImage) {
+        deleteLocalFile(tempImageFile?.path);
+      }
+
+      if (uploadedVideo) {
+        deleteLocalFile(tempVideoFile?.path);
+      }
 
       return res.status(201).json({
         ok: true,
@@ -422,8 +578,10 @@ router.post(
         data: result.recordset[0]
       });
     } catch (error) {
-      deleteUploadedFile(buildStoredMediaPath(req.files?.image?.[0]));
-      deleteUploadedFile(buildStoredMediaPath(req.files?.video?.[0]));
+      deleteLocalFile(tempImageFile?.path);
+      deleteLocalFile(tempVideoFile?.path);
+      await removeStoredMedia(uploadedImage?.url, uploadedImage?.publicId, 'image');
+      await removeStoredMedia(uploadedVideo?.url, uploadedVideo?.publicId, 'video');
 
       return res.status(500).json({
         ok: false,
@@ -448,11 +606,18 @@ router.put(
   async (req, res) => {
     const postId = Number(req.params.id);
     const title = normalizeText(req.body.title);
+    const excerpt = normalizeText(req.body.excerpt);
     const content = normalizeText(req.body.content);
+    const seoTitle = normalizeText(req.body.seoTitle);
+    const seoDescription = normalizeText(req.body.seoDescription);
+    const isPublished = parseBoolean(req.body.isPublished);
+    const isFeatured = parseBoolean(req.body.isFeatured);
+    const tempImageFile = req.files?.image?.[0] || null;
+    const tempVideoFile = req.files?.video?.[0] || null;
 
     if (!postId || !title || !content) {
-      deleteUploadedFile(buildStoredMediaPath(req.files?.image?.[0]));
-      deleteUploadedFile(buildStoredMediaPath(req.files?.video?.[0]));
+      deleteLocalFile(tempImageFile?.path);
+      deleteLocalFile(tempVideoFile?.path);
 
       return res.status(400).json({
         ok: false,
@@ -461,8 +626,13 @@ router.put(
     }
 
     const slug = createSlug(title);
+    const nextExcerpt = buildExcerpt(content, excerpt);
+    const nextSeoTitle = buildSeoTitle(title, seoTitle);
+    const nextSeoDescription = buildSeoDescription(content, excerpt, seoDescription);
 
     let pool;
+    let uploadedImage = null;
+    let uploadedVideo = null;
 
     try {
       pool = await getConnectionPool();
@@ -474,14 +644,17 @@ router.put(
           SELECT TOP 1
             Id AS id,
             ImagePath AS imagePath,
-            VideoPath AS videoPath
+            VideoPath AS videoPath,
+            ImagePublicId AS imagePublicId,
+            VideoPublicId AS videoPublicId,
+            PublishedAt AS publishedAt
           FROM dbo.Posts
           WHERE Id = @id;
         `);
 
       if (currentPost.recordset.length === 0) {
-        deleteUploadedFile(buildStoredMediaPath(req.files?.image?.[0]));
-        deleteUploadedFile(buildStoredMediaPath(req.files?.video?.[0]));
+        deleteLocalFile(tempImageFile?.path);
+        deleteLocalFile(tempVideoFile?.path);
 
         return res.status(404).json({
           ok: false,
@@ -499,8 +672,8 @@ router.put(
         `);
 
       if (duplicatePost.recordset.length > 0) {
-        deleteUploadedFile(buildStoredMediaPath(req.files?.image?.[0]));
-        deleteUploadedFile(buildStoredMediaPath(req.files?.video?.[0]));
+        deleteLocalFile(tempImageFile?.path);
+        deleteLocalFile(tempVideoFile?.path);
 
         return res.status(400).json({
           ok: false,
@@ -508,47 +681,92 @@ router.put(
         });
       }
 
-      const nextImagePath = req.files?.image?.[0]
-        ? buildStoredMediaPath(req.files.image[0])
-        : currentPost.recordset[0].imagePath;
-      const nextVideoPath = req.files?.video?.[0]
-        ? buildStoredMediaPath(req.files.video[0])
-        : currentPost.recordset[0].videoPath;
+      uploadedImage = await uploadMediaToCloudinary(tempImageFile, 'image');
+      uploadedVideo = await uploadMediaToCloudinary(tempVideoFile, 'video');
+
+      const nextImagePath = uploadedImage?.url || (
+        tempImageFile ? buildStoredMediaPath(tempImageFile) : currentPost.recordset[0].imagePath
+      );
+      const nextImagePublicId = uploadedImage?.publicId || (
+        currentPost.recordset[0].imagePublicId || null
+      );
+      const nextVideoPath = uploadedVideo?.url || (
+        tempVideoFile ? buildStoredMediaPath(tempVideoFile) : currentPost.recordset[0].videoPath
+      );
+      const nextVideoPublicId = uploadedVideo?.publicId || (
+        currentPost.recordset[0].videoPublicId || null
+      );
+      const nextPublishedAt = isPublished
+        ? currentPost.recordset[0].publishedAt || new Date()
+        : null;
 
       const result = await pool.request()
         .input('id', sql.Int, postId)
         .input('title', sql.NVarChar(200), title)
         .input('slug', sql.NVarChar(220), slug)
+        .input('excerpt', sql.NVarChar(500), nextExcerpt)
         .input('content', sql.NVarChar(sql.MAX), content)
         .input('imagePath', sql.NVarChar(500), nextImagePath)
+        .input('imagePublicId', sql.NVarChar(255), nextImagePublicId)
         .input('videoPath', sql.NVarChar(500), nextVideoPath)
+        .input('videoPublicId', sql.NVarChar(255), nextVideoPublicId)
+        .input('seoTitle', sql.NVarChar(200), nextSeoTitle)
+        .input('seoDescription', sql.NVarChar(320), nextSeoDescription)
+        .input('isPublished', sql.Bit, isPublished)
+        .input('isFeatured', sql.Bit, isFeatured)
+        .input('publishedAt', sql.DateTime2, nextPublishedAt)
         .query(`
           UPDATE dbo.Posts
           SET
             Title = @title,
             Slug = @slug,
+            Excerpt = @excerpt,
             Content = @content,
             ImagePath = @imagePath,
+            ImagePublicId = @imagePublicId,
             VideoPath = @videoPath,
+            VideoPublicId = @videoPublicId,
+            SeoTitle = @seoTitle,
+            SeoDescription = @seoDescription,
+            IsPublished = @isPublished,
+            IsFeatured = @isFeatured,
+            PublishedAt = @publishedAt,
             UpdatedAt = SYSUTCDATETIME()
           OUTPUT
             INSERTED.Id AS id,
             INSERTED.Title AS title,
             INSERTED.Slug AS slug,
+            INSERTED.Excerpt AS excerpt,
             INSERTED.Content AS content,
             INSERTED.ImagePath AS imagePath,
             INSERTED.VideoPath AS videoPath,
+            INSERTED.SeoTitle AS seoTitle,
+            INSERTED.SeoDescription AS seoDescription,
+            INSERTED.IsPublished AS isPublished,
+            INSERTED.IsFeatured AS isFeatured,
+            INSERTED.PublishedAt AS publishedAt,
             INSERTED.CreatedAt AS createdAt,
             INSERTED.UpdatedAt AS updatedAt
           WHERE Id = @id;
         `);
 
-      if (req.files?.image?.[0]) {
-        deleteUploadedFile(currentPost.recordset[0].imagePath);
+      deleteLocalFile(tempImageFile?.path);
+      deleteLocalFile(tempVideoFile?.path);
+
+      if (tempImageFile) {
+        await removeStoredMedia(
+          currentPost.recordset[0].imagePath,
+          currentPost.recordset[0].imagePublicId,
+          'image'
+        );
       }
 
-      if (req.files?.video?.[0]) {
-        deleteUploadedFile(currentPost.recordset[0].videoPath);
+      if (tempVideoFile) {
+        await removeStoredMedia(
+          currentPost.recordset[0].videoPath,
+          currentPost.recordset[0].videoPublicId,
+          'video'
+        );
       }
 
       return res.json({
@@ -557,8 +775,10 @@ router.put(
         data: result.recordset[0]
       });
     } catch (error) {
-      deleteUploadedFile(buildStoredMediaPath(req.files?.image?.[0]));
-      deleteUploadedFile(buildStoredMediaPath(req.files?.video?.[0]));
+      deleteLocalFile(tempImageFile?.path);
+      deleteLocalFile(tempVideoFile?.path);
+      await removeStoredMedia(uploadedImage?.url, uploadedImage?.publicId, 'image');
+      await removeStoredMedia(uploadedVideo?.url, uploadedVideo?.publicId, 'video');
 
       return res.status(500).json({
         ok: false,
@@ -595,7 +815,9 @@ router.delete('/posts/:id', verifyAdminToken, async (req, res) => {
         SELECT TOP 1
           Id AS id,
           ImagePath AS imagePath,
-          VideoPath AS videoPath
+          ImagePublicId AS imagePublicId,
+          VideoPath AS videoPath,
+          VideoPublicId AS videoPublicId
         FROM dbo.Posts
         WHERE Id = @id;
       `);
@@ -614,8 +836,16 @@ router.delete('/posts/:id', verifyAdminToken, async (req, res) => {
         WHERE Id = @id;
       `);
 
-    deleteUploadedFile(currentPost.recordset[0].imagePath);
-    deleteUploadedFile(currentPost.recordset[0].videoPath);
+    await removeStoredMedia(
+      currentPost.recordset[0].imagePath,
+      currentPost.recordset[0].imagePublicId,
+      'image'
+    );
+    await removeStoredMedia(
+      currentPost.recordset[0].videoPath,
+      currentPost.recordset[0].videoPublicId,
+      'video'
+    );
 
     return res.json({
       ok: true,

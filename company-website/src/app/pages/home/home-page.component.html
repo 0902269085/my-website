@@ -101,6 +101,49 @@
   </div>
 </section>
 
+@if (latestPosts.length) {
+  <section class="home-news">
+    <div class="container">
+      <div class="section-heading home-news__heading">
+        <p class="eyebrow">Tin tức mới</p>
+        <h2>Khám phá những bài viết mới nhất từ THE SWAN ATELIERE</h2>
+        <p>
+          Khu này sẽ tự lấy khoảng 3 bài đã được đăng công khai từ admin và dẫn người xem đến trang Tin tức để xem đầy đủ hơn.
+        </p>
+      </div>
+
+      <div class="home-news__grid">
+        @for (post of latestPosts; track post.id) {
+          <article class="home-news__card">
+            <a [routerLink]="['/tin-tuc', post.slug]" class="home-news__image-link">
+              @if (post.imagePath) {
+                <img [src]="resolveMediaUrl(post.imagePath)" [alt]="post.title" class="home-news__image" />
+              } @else {
+                <div class="home-news__image home-news__image--placeholder"></div>
+              }
+            </a>
+
+            <div class="home-news__content">
+              <div class="home-news__meta">
+                @if (post.isFeatured) {
+                  <span class="home-news__badge">Nổi bật</span>
+                }
+              </div>
+              <h3>{{ post.title }}</h3>
+              <p>{{ post.excerpt }}</p>
+              <a [routerLink]="['/tin-tuc', post.slug]" class="home-news__link">Xem bài viết</a>
+            </div>
+          </article>
+        }
+      </div>
+
+      <div class="home-news__actions">
+        <a routerLink="/tin-tuc" class="button button--ghost">Đi đến trang Tin tức</a>
+      </div>
+    </div>
+  </section>
+}
+
 <section class="home-cta">
   <div class="container">
     <div class="home-cta__box">

@@ -18,9 +18,15 @@ export interface AdminPost {
   id: number;
   title: string;
   slug: string;
+  excerpt: string;
   content: string;
   imagePath: string | null;
   videoPath: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  isPublished: boolean;
+  isFeatured: boolean;
+  publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

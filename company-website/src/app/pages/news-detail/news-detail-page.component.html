@@ -1,0 +1,46 @@
+<section class="news-detail">
+  <div class="container">
+    @if (isLoading) {
+      <div class="news-detail__empty">
+        <p>Đang tải chi tiết bài viết...</p>
+      </div>
+    } @else if (errorMessage) {
+      <div class="news-detail__empty">
+        <p>{{ errorMessage }}</p>
+        <a routerLink="/tin-tuc" class="button button--ghost">Quay lại trang tin tức</a>
+      </div>
+    } @else if (post) {
+      <article class="news-article">
+        <a routerLink="/tin-tuc" class="news-article__back">← Quay lại Tin tức</a>
+
+        <div class="news-article__meta">
+          @if (post.isFeatured) {
+            <span class="news-badge">Bài nổi bật</span>
+          }
+
+          @if (post.publishedAt) {
+            <span>{{ post.publishedAt | date:'mediumDate' }}</span>
+          }
+        </div>
+
+        <h1>{{ post.title }}</h1>
+        <p class="news-article__excerpt">{{ post.excerpt }}</p>
+
+        @if (post.imagePath) {
+          <img class="news-article__image" [src]="resolveMediaUrl(post.imagePath)" [alt]="post.title" />
+        }
+
+        <div class="news-article__content">
+          <p>{{ post.content }}</p>
+        </div>
+
+        @if (post.videoPath) {
+          <div class="news-article__video">
+            <h2>Video đính kèm</h2>
+            <video controls preload="metadata" [src]="resolveMediaUrl(post.videoPath)"></video>
+          </div>
+        }
+      </article>
+    }
+  </div>
+</section>

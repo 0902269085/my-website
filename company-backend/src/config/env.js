@@ -37,6 +37,11 @@ const env = {
   adminJwtSecret: process.env.ADMIN_JWT_SECRET || 'change-this-admin-secret',
   adminDefaultUsername: process.env.ADMIN_DEFAULT_USERNAME || 'admin',
   adminDefaultPassword: process.env.ADMIN_DEFAULT_PASSWORD || 'ChangeMe123!',
+  cloudinary: {
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
+    apiKey: process.env.CLOUDINARY_API_KEY || '',
+    apiSecret: process.env.CLOUDINARY_API_SECRET || ''
+  },
   db: {
     user: process.env.DB_USER || 'sa',
     password: process.env.DB_PASSWORD || '',

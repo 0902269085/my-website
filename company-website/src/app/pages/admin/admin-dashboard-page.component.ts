@@ -55,7 +55,12 @@ export class AdminDashboardPageComponent implements OnInit {
   protected postSearchKeyword = '';
   protected postForm = {
     title: '',
-    content: ''
+    excerpt: '',
+    content: '',
+    seoTitle: '',
+    seoDescription: '',
+    isPublished: true,
+    isFeatured: false
   };
   protected selectedImageFile: File | null = null;
   protected selectedVideoFile: File | null = null;
@@ -305,7 +310,12 @@ export class AdminDashboardPageComponent implements OnInit {
     this.editingPostId = null;
     this.postForm = {
       title: '',
-      content: ''
+      excerpt: '',
+      content: '',
+      seoTitle: '',
+      seoDescription: '',
+      isPublished: true,
+      isFeatured: false
     };
     this.selectedImageFile = null;
     this.selectedVideoFile = null;
@@ -321,7 +331,12 @@ export class AdminDashboardPageComponent implements OnInit {
     this.editingPostId = post.id;
     this.postForm = {
       title: post.title,
-      content: post.content
+      excerpt: post.excerpt,
+      content: post.content,
+      seoTitle: post.seoTitle || '',
+      seoDescription: post.seoDescription || '',
+      isPublished: post.isPublished,
+      isFeatured: post.isFeatured
     };
     this.selectedImageFile = null;
     this.selectedVideoFile = null;
@@ -345,7 +360,12 @@ export class AdminDashboardPageComponent implements OnInit {
 
     const formData = new FormData();
     formData.append('title', this.postForm.title.trim());
+    formData.append('excerpt', this.postForm.excerpt.trim());
     formData.append('content', this.postForm.content.trim());
+    formData.append('seoTitle', this.postForm.seoTitle.trim());
+    formData.append('seoDescription', this.postForm.seoDescription.trim());
+    formData.append('isPublished', String(this.postForm.isPublished));
+    formData.append('isFeatured', String(this.postForm.isFeatured));
 
     if (this.selectedImageFile) {
       formData.append('image', this.selectedImageFile);

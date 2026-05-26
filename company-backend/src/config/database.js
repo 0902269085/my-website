@@ -28,12 +28,70 @@ async function ensureAdminCmsTables(pool) {
         Id INT IDENTITY(1, 1) PRIMARY KEY,
         Title NVARCHAR(200) NOT NULL,
         Slug NVARCHAR(220) NOT NULL UNIQUE,
+        Excerpt NVARCHAR(500) NULL,
         Content NVARCHAR(MAX) NOT NULL,
         ImagePath NVARCHAR(500) NULL,
+        ImagePublicId NVARCHAR(255) NULL,
         VideoPath NVARCHAR(500) NULL,
+        VideoPublicId NVARCHAR(255) NULL,
+        SeoTitle NVARCHAR(200) NULL,
+        SeoDescription NVARCHAR(320) NULL,
+        IsPublished BIT NOT NULL DEFAULT 1,
+        IsFeatured BIT NOT NULL DEFAULT 0,
+        PublishedAt DATETIME2 NULL,
         CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
         UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
       );
+    END;
+
+    IF COL_LENGTH(N'dbo.Posts', N'Excerpt') IS NULL
+    BEGIN
+      ALTER TABLE dbo.Posts
+      ADD Excerpt NVARCHAR(500) NULL;
+    END;
+
+    IF COL_LENGTH(N'dbo.Posts', N'SeoTitle') IS NULL
+    BEGIN
+      ALTER TABLE dbo.Posts
+      ADD SeoTitle NVARCHAR(200) NULL;
+    END;
+
+    IF COL_LENGTH(N'dbo.Posts', N'ImagePublicId') IS NULL
+    BEGIN
+      ALTER TABLE dbo.Posts
+      ADD ImagePublicId NVARCHAR(255) NULL;
+    END;
+
+    IF COL_LENGTH(N'dbo.Posts', N'VideoPublicId') IS NULL
+    BEGIN
+      ALTER TABLE dbo.Posts
+      ADD VideoPublicId NVARCHAR(255) NULL;
+    END;
+
+    IF COL_LENGTH(N'dbo.Posts', N'SeoDescription') IS NULL
+    BEGIN
+      ALTER TABLE dbo.Posts
+      ADD SeoDescription NVARCHAR(320) NULL;
+    END;
+
+    IF COL_LENGTH(N'dbo.Posts', N'IsPublished') IS NULL
+    BEGIN
+      ALTER TABLE dbo.Posts
+      ADD IsPublished BIT NOT NULL
+      CONSTRAINT DF_Posts_IsPublished DEFAULT 1;
+    END;
+
+    IF COL_LENGTH(N'dbo.Posts', N'IsFeatured') IS NULL
+    BEGIN
+      ALTER TABLE dbo.Posts
+      ADD IsFeatured BIT NOT NULL
+      CONSTRAINT DF_Posts_IsFeatured DEFAULT 0;
+    END;
+
+    IF COL_LENGTH(N'dbo.Posts', N'PublishedAt') IS NULL
+    BEGIN
+      ALTER TABLE dbo.Posts
+      ADD PublishedAt DATETIME2 NULL;
     END;
 
     IF OBJECT_ID(N'dbo.SiteSettings', N'U') IS NULL
@@ -46,6 +104,32 @@ async function ensureAdminCmsTables(pool) {
         UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
       );
     END;
+  `);
+
+  await pool.request().batch(`
+    UPDATE dbo.Posts
+    SET IsPublished = 1
+    WHERE IsPublished IS NULL;
+
+    UPDATE dbo.Posts
+    SET IsFeatured = 0
+    WHERE IsFeatured IS NULL;
+
+    UPDATE dbo.Posts
+    SET PublishedAt = COALESCE(PublishedAt, UpdatedAt, CreatedAt)
+    WHERE IsPublished = 1 AND PublishedAt IS NULL;
+
+    UPDATE dbo.Posts
+    SET Excerpt = LEFT(Content, 220)
+    WHERE Excerpt IS NULL OR LTRIM(RTRIM(Excerpt)) = N'';
+
+    UPDATE dbo.Posts
+    SET SeoTitle = Title
+    WHERE SeoTitle IS NULL OR LTRIM(RTRIM(SeoTitle)) = N'';
+
+    UPDATE dbo.Posts
+    SET SeoDescription = LEFT(COALESCE(NULLIF(Excerpt, N''), Content), 320)
+    WHERE SeoDescription IS NULL OR LTRIM(RTRIM(SeoDescription)) = N'';
   `);
 
   const adminCount = await pool.request().query(`

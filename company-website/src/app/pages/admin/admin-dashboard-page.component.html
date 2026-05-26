@@ -268,12 +268,54 @@
           </label>
 
           <label class="form-field">
+            <span>Tóm tắt ngắn</span>
+            <textarea
+              name="excerpt"
+              [(ngModel)]="postForm.excerpt"
+              rows="4"
+              placeholder="Đoạn mô tả ngắn để hiện ở trang Tin tức và trang chủ"
+            ></textarea>
+          </label>
+
+          <label class="form-field">
             <span>Nội dung</span>
             <textarea
               name="content"
               [(ngModel)]="postForm.content"
               rows="10"
               placeholder="Nhập nội dung bài viết"
+            ></textarea>
+          </label>
+
+          <div class="admin-form__row admin-form__row--checkboxes">
+            <label class="admin-toggle">
+              <input type="checkbox" [(ngModel)]="postForm.isPublished" name="isPublished" />
+              <span>Cho hiển thị ngoài website</span>
+            </label>
+
+            <label class="admin-toggle">
+              <input type="checkbox" [(ngModel)]="postForm.isFeatured" name="isFeatured" />
+              <span>Đánh dấu bài nổi bật</span>
+            </label>
+          </div>
+
+          <label class="form-field">
+            <span>SEO title</span>
+            <input
+              type="text"
+              name="seoTitle"
+              [(ngModel)]="postForm.seoTitle"
+              placeholder="Tiêu đề hiển thị khi mở bài chi tiết"
+            />
+          </label>
+
+          <label class="form-field">
+            <span>SEO description</span>
+            <textarea
+              name="seoDescription"
+              [(ngModel)]="postForm.seoDescription"
+              rows="4"
+              placeholder="Mô tả ngắn cho bài viết khi lên Google hoặc chia sẻ link"
             ></textarea>
           </label>
 
@@ -360,13 +402,30 @@
 
               <div class="post-card__content">
                 <h3>{{ post.title }}</h3>
+                <div class="post-card__badges">
+                  <span class="post-badge" [class.post-badge--draft]="!post.isPublished">
+                    {{ post.isPublished ? 'Đã đăng' : 'Nháp' }}
+                  </span>
+                  @if (post.isFeatured) {
+                    <span class="post-badge post-badge--featured">Nổi bật</span>
+                  }
+                </div>
                 <p class="post-card__meta">Đường dẫn: {{ post.slug }}</p>
-                <p class="post-card__meta">Cập nhật: {{ post.updatedAt | date:'short' }}</p>
-                <p class="post-card__preview">{{ post.content }}</p>
+                <p class="post-card__meta">
+                  {{ post.isPublished && post.publishedAt ? 'Ngày đăng' : 'Cập nhật' }}:
+                  {{ (post.publishedAt || post.updatedAt) | date:'short' }}
+                </p>
+                <p class="post-card__preview">{{ post.excerpt }}</p>
 
                 @if (post.videoPath) {
                   <a class="post-card__link" [href]="resolveMediaUrl(post.videoPath)" target="_blank" rel="noreferrer">
                     Mở video đã tải lên
+                  </a>
+                }
+
+                @if (post.isPublished) {
+                  <a class="post-card__link" [href]="'/tin-tuc/' + post.slug" target="_blank" rel="noreferrer">
+                    Xem bài ngoài website
                   </a>
                 }
 

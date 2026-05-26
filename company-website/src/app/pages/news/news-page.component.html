@@ -1,0 +1,60 @@
+<section class="news-page">
+  <div class="container">
+    <div class="section-heading news-page__heading">
+      <p class="eyebrow">Tin tức</p>
+      <h1>Cập nhật bài viết mới từ THE SWAN ATELIERE</h1>
+      <p>
+        Đây là nơi hiển thị các bài viết đã được đăng từ trang admin. Bài nổi bật sẽ được ưu tiên xuất hiện phía trên để khách xem dễ theo dõi hơn.
+      </p>
+    </div>
+
+    @if (isLoading) {
+      <div class="news-empty">
+        <p>Đang tải danh sách tin tức...</p>
+      </div>
+    } @else if (errorMessage) {
+      <div class="news-empty">
+        <p>{{ errorMessage }}</p>
+      </div>
+    } @else if (!posts.length) {
+      <div class="news-empty">
+        <p>Hiện chưa có bài viết nào được đăng công khai.</p>
+      </div>
+    } @else {
+      <div class="news-grid">
+        @for (post of posts; track post.id) {
+          <article class="news-card">
+            <a class="news-card__image-link" [routerLink]="['/tin-tuc', post.slug]">
+              @if (post.imagePath) {
+                <img class="news-card__image" [src]="resolveMediaUrl(post.imagePath)" [alt]="post.title" />
+              } @else {
+                <div class="news-card__image news-card__image--placeholder"></div>
+              }
+            </a>
+
+            <div class="news-card__content">
+              <div class="news-card__meta">
+                @if (post.isFeatured) {
+                  <span class="news-badge">Nổi bật</span>
+                }
+
+                @if (post.publishedAt) {
+                  <span>{{ post.publishedAt | date:'mediumDate' }}</span>
+                }
+              </div>
+
+              <h2>
+                <a [routerLink]="['/tin-tuc', post.slug]">{{ post.title }}</a>
+              </h2>
+              <p>{{ post.excerpt }}</p>
+
+              <a class="news-card__link" [routerLink]="['/tin-tuc', post.slug]">
+                Xem chi tiết
+              </a>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </div>
+</section>

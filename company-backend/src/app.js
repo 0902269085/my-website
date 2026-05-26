@@ -8,6 +8,7 @@ const { env } = require('./config/env');
 const adminRoutes = require('./routes/admin.routes');
 const healthRoutes = require('./routes/health.routes');
 const contactRoutes = require('./routes/contact.routes');
+const postRoutes = require('./routes/post.routes');
 const { router: siteSettingsRoutes } = require('./routes/site-settings.routes');
 
 const app = express();
@@ -36,6 +37,7 @@ app.get('/', (req, res) => {
       health: '/api/health',
       database: '/api/health/database',
       contact: '/api/contact',
+      posts: '/api/posts',
       adminLogin: '/api/admin/login',
       adminPosts: '/api/admin/posts'
     }
@@ -44,6 +46,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/health', healthRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/posts', postRoutes);
 app.use('/api/site-settings', siteSettingsRoutes);
 app.use('/api/admin', adminRoutes);
 

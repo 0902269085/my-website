@@ -7,6 +7,8 @@ import { AboutPageComponent } from './pages/about/about-page.component';
 import { ContactPageComponent } from './pages/contact/contact-page.component';
 import { ServicesPageComponent } from './pages/services/services-page.component';
 import { HomePageComponent } from './pages/home/home-page.component';
+import { NewsPageComponent } from './pages/news/news-page.component';
+import { NewsDetailPageComponent } from './pages/news-detail/news-detail-page.component';
 
 export const routes: Routes = [
   {
@@ -24,6 +26,14 @@ export const routes: Routes = [
       {
         path: 'dich-vu',
         component: ServicesPageComponent
+      },
+      {
+        path: 'tin-tuc',
+        component: NewsPageComponent
+      },
+      {
+        path: 'tin-tuc/:slug',
+        component: NewsDetailPageComponent
       },
       {
         path: 'lien-he',

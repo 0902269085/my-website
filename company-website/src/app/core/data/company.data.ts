@@ -14,6 +14,7 @@ export const companyData = {
     { label: 'Trang chủ', route: '/' },
     { label: 'Giới thiệu', route: '/gioi-thieu' },
     { label: 'Dịch vụ', route: '/dich-vu' },
+    { label: 'Tin tức', route: '/tin-tuc' },
     { label: 'Liên hệ', route: '/lien-he' }
   ],
   services: [

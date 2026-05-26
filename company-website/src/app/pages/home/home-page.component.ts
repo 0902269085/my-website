@@ -2,6 +2,8 @@ import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { companyData } from '../../core/data/company.data';
 import { HeroSettings, SiteSettingsService } from '../../core/services/site-settings.service';
+import { PostApiService, PublicPostSummary } from '../../core/services/post-api.service';
+import { resolveMediaUrl } from '../../core/config/api.config';
 
 @Component({
   selector: 'app-home-page',
@@ -11,9 +13,12 @@ import { HeroSettings, SiteSettingsService } from '../../core/services/site-sett
 })
 export class HomePageComponent implements OnInit {
   private readonly siteSettingsService = inject(SiteSettingsService);
+  private readonly postApiService = inject(PostApiService);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
   protected readonly company = companyData;
+  protected readonly resolveMediaUrl = resolveMediaUrl;
+  protected latestPosts: PublicPostSummary[] = [];
   protected heroSettings: HeroSettings = {
     eyebrow: 'Thời trang thiết kế nữ',
     title: 'THE SWAN ATELIERE mang đến những thiết kế dành cho nữ trẻ yêu sự thanh lịch và hiện đại',
@@ -33,6 +38,13 @@ export class HomePageComponent implements OnInit {
     this.siteSettingsService.getSiteSettings().subscribe({
       next: (response) => {
         this.heroSettings = response.data.hero;
+        this.changeDetectorRef.detectChanges();
+      }
+    });
+
+    this.postApiService.getPosts({ limit: 3 }).subscribe({
+      next: (response) => {
+        this.latestPosts = response.data;
         this.changeDetectorRef.detectChanges();
       }
     });
